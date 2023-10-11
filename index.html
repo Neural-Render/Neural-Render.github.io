@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Neural Fields in Principle</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="NeurIPS 2023 Workshop">
+    <meta name="keywords" content="bootstrap, business, creative">
+    <meta name="author" content="Createx Studio">
+	  
+	  
+	  
+	  
+    <link rel="icon" href="../assets/img/logo.png">
+	  
+<!--     <meta property="og:image" content="https://fnzhan.github.io/neural-gauge-fields/img/ngf_logo.png"> -->
+
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Favicon and Touch Icons -->
+    <link rel="shortcut icon" href="favicon.ico">
+    <meta name="msapplication-TileColor" content="#080032">
+    <meta name="msapplication-config" content="../assets/favicon/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- Vendor Styles -->
+    <link rel="stylesheet" media="screen" href="../assets/vendor/boxicons/css/boxicons.min.css"/>
+    <link rel="stylesheet" media="screen" href="../assets/vendor/swiper/swiper-bundle.min.css"/>
+    <link rel="stylesheet" media="screen" href="../assets/vendor/lightgallery/css/lightgallery-bundle.min.css"/>
+
+    <!-- Main Theme Styles + Bootstrap -->
+    <link rel="stylesheet" media="screen" href="../assets/css/theme.min.css">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Page loading styles -->
+    <style>
+      pre {
+        border: 1px solid #eff2fc;
+        display: none;
+        font-size: 12px;
+        margin: 5px 0;
+        max-width: 96%;
+        overflow: auto;
+        padding: 12px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      .page-loading {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        -webkit-transition: all .4s .2s ease-in-out;
+        transition: all .4s .2s ease-in-out;
+        background-color: #fff;
+        opacity: 0;
+        visibility: hidden;
+        z-index: 9999;
+      }
+      .dark-mode .page-loading {
+        background-color: #131022;
+      }
+      .page-loading.active {
+        opacity: 1;
+        visibility: visible;
+      }
+      .page-loading-inner {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        -webkit-transform: translateY(-50%);
+        transform: translateY(-50%);
+        -webkit-transition: opacity .2s ease-in-out;
+        transition: opacity .2s ease-in-out;
+        opacity: 0;
+      }
+      .page-loading.active > .page-loading-inner {
+        opacity: 1;
+      }
+      .page-loading-inner > span {
+        display: block;
+        font-size: 1rem;
+        font-weight: normal;
+        color: #9397ad;
+      }
+      .dark-mode .page-loading-inner > span {
+        color: #fff;
+        opacity: .6;
+      }
+      .page-spinner {
+        display: inline-block;
+        width: 2.75rem;
+        height: 2.75rem;
+        margin-bottom: .75rem;
+        vertical-align: text-bottom;
+        border: .15em solid #b4b7c9;
+        border-right-color: transparent;
+        border-radius: 50%;
+        -webkit-animation: spinner .75s linear infinite;
+        animation: spinner .75s linear infinite;
+      }
+      .dark-mode .page-spinner {
+        border-color: rgba(255,255,255,.4);
+        border-right-color: transparent;
+      }
+      @-webkit-keyframes spinner {
+        100% {
+          -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes spinner {
+        100% {
+          -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+
+      #tracks ul {
+        line-height: 200%
+      }
+
+      #schedule th.time {
+        width: 200px
+      }
+
+      footer {
+        /*background-color: #131022;*/
+/*         background-image: url(../assets/img/backgrounds/footer-bg.jpg); */
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+        position: relative;
+      }
+
+      footer::before {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        content: '';
+        background-color: rgba(31, 39, 73, .97);
+      }
+
+      @media only screen and (max-width: 767px) {
+        .swiper-slide-active {
+          padding: 40px;
+        }
+      }
+    </style>
+
+    <!-- Theme mode -->
+    <script>
+      let mode = window.localStorage.getItem('mode'),
+          root = document.getElementsByTagName('html')[0];
+      if (mode !== undefined && mode === 'dark') {
+        root.classList.add('dark-mode');
+      } else {
+        root.classList.remove('dark-mode');
+      }
+    </script>
+
+    <!-- Page loading scripts -->
+    <script>
+      (function () {
+        window.onload = function () {
+          const preloader = document.querySelector('.page-loading');
+          preloader.classList.remove('active');
+          setTimeout(function () {
+            preloader.remove();
+          }, 1000);
+        };
+      })();
+    </script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+  </head>
+
+
+  <!-- Body -->
+  <body>
+
+    <!-- Page loading spinner -->
+    <div class="page-loading active">
+      <div class="page-loading-inner">
+        <div class="page-spinner"></div><span>Loading...</span>
+      </div>
+    </div>
+
+
+    <!-- Page wrapper for sticky footer -->
+    <!-- Wraps everything except footer to push footer to the bottom of the page if there is little content -->
+    <main class="page-wrapper">
+
+
+      <!-- Navbar -->
+      <!-- Remove "fixed-top" class to make navigation bar scrollable with the page -->
+      <header class="header navbar navbar-expand-lg navbar-light bg-light shadow-sm fixed-top">
+        <div class="container px-3">
+          <a href="index.html" class="navbar-brand pe-3">
+            <img src="../assets/img/neurips.png" width="75" alt="Logo">
+<!--             MIPI -->
+          </a>
+          <div id="navbarNav" class="offcanvas offcanvas-end">
+            <div class="offcanvas-header border-bottom">
+              <h5 class="offcanvas-title">Menu</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                  <a href="#overview" class="nav-link">Overview</a>
+                </li>
+		<li class="nav-item">
+                  <a href="#speakers" class="nav-link">Speakers</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#submission" class="nav-link">Submission</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#dates" class="nav-link">Dates</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#schedule" class="nav-link">Schedule</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#organizers" class="nav-link">Organizers</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#committee" class="nav-link">Program Committee</a>
+                </li>
+<!--                 <li class="nav-item">
+                  <a href="#previous" class="nav-link">Previous MIPI</a>
+                </li> -->
+              </ul>
+            </div>
+          </div>
+          <!-- <div class="form-check form-switch mode-switch pe-lg-1 ms-auto me-4" data-bs-toggle="mode">
+            <input type="checkbox" class="form-check-input" id="theme-mode">
+            <label class="form-check-label d-none d-sm-block" for="theme-mode">Light</label>
+            <label class="form-check-label d-none d-sm-block" for="theme-mode">Dark</label>
+          </div> -->
+          <button type="button" class="navbar-toggler" data-bs-toggle="offcanvas" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </div>
+      </header>
+      
+
+      <!-- Hero slider + BG parallax -->
+      <section class="jarallax dark-mode bg-dark py-xxl-5" data-jarallax data-speed="0.4">
+        <span class="position-absolute top-0 start-0 w-100 h-100 bg-gradient-dark-translucent"></span>
+<!--         <div class="jarallax-img" style="background-image: url(../assets/img/backgrounds/head-bg-2023.jpg);"></div> -->
+        <div class="position-relative text-center zindex-5 overflow-hidden pt-4 py-md-5">
+
+
+<!--           <div class="container text-center py-xl-5">
+            <div class="row justify-content-center pt-lg-5">
+              <div class="col-xl-8 col-lg-9 col-md-10 col-11">
+                <div class="swiper pt-5 pb-4 py-md-5" data-swiper-options='{
+                  "effect": "fade",
+                  "speed": 500,
+                  "autoplay": {
+                    "delay": 5500,
+                    "disableOnInteraction": false
+                  },
+                  "pagination": {
+                    "el": ".swiper-pagination",
+                    "clickable": true
+                  },
+                  "navigation": {
+                    "prevEl": "#hero-prev",
+                    "nextEl": "#hero-next"
+                  }
+                }'>
+                  <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                      <h2 class="display-4 from-start mb-lg-1">Neural Fields in Principle<br>
+                        Workshop 2023</h2>
+                      <div class="from-end">
+                        <p class="fs-4 text-light opacity-70 pb-2 mb-lg-5">Workshop in conjunction with <font color="#f029cf"><b>NeurIPS 2023</b></font> <br>
+                          <span style="font-size:1.3rem"> <i class="fa fa-calendar" style="color:#f029cf"></i> Sunday June 18th, 2023  &nbsp; &nbsp; &nbsp; 
+                            <i class="fa fa-map-marker" style="color:#f029cf"></i> New Orleans, USA </span>
+                        </p>
+                      </div>
+                      <div class="scale-up delay-0">
+                        <a href="#tracks" class="btn btn-primary shadow-primary btn-lg">Start Challenge</a>
+                      </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div> -->
+          
+          
+<!--             <p style="font-size:50px; color:black; font-weight: 50" align="center">Neural Fields in Principle -->
+	  <br>
+	  <br>
+          <p style="font-size:65px; color:rgb(255, 255, 255); font-weight: 65" align="center"><b>Neural Fields in Principle</b></p>
+           <p style="font-size:50px; color:rgb(255, 255, 255); font-weight: 50" align="center">Workshop 2023</p><br>
+          <p class="fs-4 text-light opacity-70 pb-2 mb-lg-5">Workshop in conjunction with <font color="#f029cf"><b>NeurIPS 2023</b></font> <br>
+                          <span style="font-size:1.3rem"> <i class="fa fa-calendar" style="color:#f029cf"></i> Sunday, Dec 10th, 2023  &nbsp; &nbsp; &nbsp; 
+                            <i class="fa fa-map-marker" style="color:#f029cf"></i> New Orleans, USA </span>
+                        </p>
+          
+        </div>
+      </section>
+      <!-- tracks -->
+      <section id="tracks" class="container py-5">
+<!--         <div class="row pt-4 pb-3">
+          <h2 class="text-center text-sm-start pb-2 pb-lg-0">Challenge Tracks</h2>
+        </div> -->
+        <div class="row">
+	  <div class="row pt-4 pb-3">
+            <h2 class="text-center text-sm-start pb-2 pb-lg-0">Overview</h2>
+          </div>
+          <!-- Item -->
+<!--           <h3>Overview</h3> -->
+          <div class="col">
+            <p align="justify">
+              As an expansion of physical fields into the realm of artificial intelligence, neural fields have shown intriguing success in computer vision, computer graphic, robotics, etc. 
+              However, while existing works have focused on demonstrating the capabilities of neural fields, there has been less emphasis on understanding the fundamental principles that 
+              underlie the observed experimental phenomena. By drawing inspiration from physical fields where numerous fundamental principles has been rigorously derived and built, this 
+              workshop aims to foster discussions and uncover the essential principles and properties of neural fields that drive the observed experimental phenomena. This workshop invites 
+              researchers to delve into the foundational aspects and underlying mechanisms behind the success of neural fields, which could help to lay a sound foundation for the employment 
+              of neural fields in broad areas.
+            </p>
+		  
+            <div style="text-align: center;">
+		<img src="../data/overview.jpg" width="1200">
+	    </div>
+<!--             <ul>
+              <li>
+                <a href="https://codalab.lisn.upsaclay.fr/competitions/9402", class="badge bg-primary fs-sm", target="_blank">
+                  Nighttime Flare Removal
+                </a>
+                is to improve nighttime image quality by removing lens flare effects.
+              </li>
+              <li>
+                <a href="https://codalab.lisn.upsaclay.fr/competitions/9334", class="badge bg-primary fs-sm", target="_blank">
+                  RGB+ToF Depth Completion
+                </a>
+                uses sparse, noisy ToF depth measurements with RGB images to obtain a complete depth map.
+              </li>
+              <li>
+                <a href="https://codalab.lisn.upsaclay.fr/competitions/9343", class="badge bg-primary fs-sm", target="_blank">
+                    RGBW Sensor Re-mosaic
+                </a>
+                converts RGBW RAW data into Bayer format so that it can be processed with standard ISPs.
+              </li>
+              <li>
+                <a href="https://codalab.lisn.upsaclay.fr/competitions/9344", class="badge bg-primary fs-sm", target="_blank">
+                    RGBW Sensor Fusion
+                </a>
+                fuses Bayer data and a monochrome channel data into Bayer format to increase SNR and spatial resolution.
+              </li>
+            </ul> -->
+          </div>
+<!-- 
+          <h3>Datasets and Submission</h3>
+          <div class="col">
+            <p>
+              Datasets are available at the Codalab site of each challenge track. Submissions to all phases will be done through the CodaLab site. Please register to the site and refer to the instructions on how to download the datasets and submit your results. The evaluation metrics of each track will be introduced in the respective site.
+            </p>
+            <p>
+              Link to Codalab:
+              <a href="https://codalab.lisn.upsaclay.fr/competitions/9402", class="badge bg-light shadow-primary fs-sm", target="_blank">
+                <b>Nighttime Flare Removal</b>
+              </a> --
+              <a href="https://codalab.lisn.upsaclay.fr/competitions/9334", class="badge bg-light shadow-primary fs-sm", target="_blank">
+                <b>RGB+ToF Depth Completion</b>
+              </a>--
+              <a href="https://codalab.lisn.upsaclay.fr/competitions/9343", class="badge bg-light shadow-primary fs-sm", target="_blank">
+                <b>RGBW Sensor Re-mosaic</b>
+              </a> --
+              <a href="https://codalab.lisn.upsaclay.fr/competitions/9344", class="badge bg-light shadow-primary fs-sm", target="_blank">
+                <b>RGBW Sensor Fusion</b>
+              </a> 
+            </p>
+          </div> -->
+
+<!--           <h3>Awards</h3>
+          <div class="col">
+            <p>
+              The winner teams of each track will receive a certificate. Challenge participants with the most successful and innovative methods will be invited 
+              to present at the MIPI workshop. 
+            </p>
+          </div> -->
+
+<!--           <h3>Terms and Conditions</h3>
+          <div class="col">
+            <p>Link to <a href="../terms.html">Terms and Conditions</a>.</p>
+            <p>
+              In the event of any inconsistency between the terms and details of this website and Codalab competition sites, the details on the Codalab sites shall prevail.
+            </p>
+          </div>        -->
+<!-- 
+          <h3>Contact</h3>
+          <div class="col">
+            <p>
+              For more information, please contact us at
+              <a href="mailto:mipi.challenge@gmail.com">mipi.challenge@gmail.com</a>.
+            </p>
+          </div>        -->
+
+        </div>
+      </section>
+	    
+	    
+      <!-- Speakers -->
+      <section id="speakers" class="container py-5">
+        <div class="row pt-4 pb-3">
+          <h2 class="text-center text-sm-start pb-2 pb-lg-0">Invited Speakers</h2>
+        </div>
+        <div class="row justify-content-center">
+		
+	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/jiajun.jpg" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://jiajunwu.com/" target="_blank">Jiajun Wu</a></h5>
+                  <p class="fs-sm mb-3">Stanford University</p>
+                </div>
+              </div>
+		
+	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/angjoo.jpg" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://people.eecs.berkeley.edu/~kanazawa/" target="_blank">Angjoo Kanazawa</a></h5>
+                  <p class="fs-sm mb-3">UC Berkeley</p>
+                </div>
+              </div>
+		
+	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/vincent.jpeg" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://www.vincentsitzmann.com/" target="_blank">Vincent Sitzmann</a></h5>
+                  <p class="fs-sm mb-3">MIT</p>
+                </div>
+              </div>
+		
+	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/gan.jpg" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="http://people.csail.mit.edu/ganchuang/" target="_blank">Chuang Gan</a></h5>
+                  <p class="fs-sm mb-3">UMass & MIT-IBM Watson AI Lab</p>
+                </div>
+              </div>
+		
+	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/matthias.jpg" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://niessnerlab.org/members/matthias_niessner/profile.html" target="_blank">Matthias Nießner</a></h5>
+                  <p class="fs-sm mb-3">TUM</p>
+                </div>
+              </div>
+		
+		
+	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/gordon.jpg" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://stanford.edu/~gordonwz/" target="_blank">Gordon Wetzstein</a></h5>
+                  <p class="fs-sm mb-3">Stanford University</p>
+                </div>
+              </div>
+
+		
+
+		
+<!-- 	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/lingjie.jpeg" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://jiajunwu.com/" target="_blank">Lingjie Liu</a></h5>
+                  <p class="fs-sm mb-3">Upenn</p>
+                </div>
+              </div> -->
+		
+	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/hao.jpg" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://cseweb.ucsd.edu/~haosu/" target="_blank">Hao Su</a></h5>
+                  <p class="fs-sm mb-3">UCSD</p>
+                </div>
+              </div>
+		
+
+		
+	</div>
+      </section>
+		
+<!-- 	<p>--TBD--</p>	 -->
+
+      <!-- Submission -->
+      <section id="submission" class="bg-secondary py-5">
+        <div class="container">
+          <div class="row pt-4 pb-3">
+            <h2 class="text-center text-sm-start pb-2 pb-lg-0">Call for Papers</h2>
+          </div>
+<!--           <div class="row pt-4 pb-3">
+            <h4 class="text-center text-sm-start pb-2 pb-lg-0">NeurIPS 2023 Workshop:</h4>
+          </div> -->
+          <div class="row">
+            <div class="col">
+                <p>
+                  We invite submissions of both <b>short and long papers</b> (4 pages and 8 pages respectively excluding references). <br> 
+			            The long papers will be included in the proceedings of NeurIPS. <br> 
+			            Potential topics include but are not limited to: <br>
+                </p>
+                <ul>
+                    <strong>
+                    <li>Advances in neural fields, including neural scene representation, neural rendering, etc.</li>
+                    <li>Properties of neural fields, e.g., smoothness, robustness, and frequency bias, etc.</li>
+                    <li>Capabilities of neural fields, e.g., denoising, label propagation, etc.</li>
+                    <li>MLP-based neural fields versus Grid-based neural fields.</li>
+                    <li>Encoding function and coordinate transformation in neural fields.</li>
+                    <li>Generative modeling of neural fields.</li>
+		    <li>Analysis-by-synthesis with neural fields.</li>
+                    <li>Neural fields in visual understanding and foundation models.</li>
+                    <li>Neural fields in robotics, physics, etc.</li>
+                    </strong>
+                </ul>
+<!--                 <p>
+                  Papers will be peer-reviewed and comply with the CVPR 2023 proceedings style, format and length. 
+                  The deadline for camera ready submission is the same as the main conference. 
+                  Papers accepted must be registered and presented to ensure their inclusion in the IEEE Xplore Library. 
+                  Selected papers will be invited to present in the workshop. Some papers will also be invited to contribute to
+                   a book chapter or a special issue article in our future publication.
+                  The format for submission is the same as the
+                    <a href="https://cvpr2023.thecvf.com/Conferences/2023/CallForPapers">
+                        CVPR 2023 requirements
+                    </a>. 
+                </p> -->
+                <p>
+                    Paper submission and review site:
+                    <a href="https://cmt3.research.microsoft.com/MIPI2023/Submission/Index", class="badge bg-success shadow-success fs-sm", target="_blank">
+                        <strong>Submission Site</strong>
+                    </a>
+                </p>
+                <br>
+              </div>
+        </div>
+
+<!--         <div class="row pt-4 pb-3">
+          <h4 class="text-center text-sm-start pb-2 pb-lg-0">IJCV Special Issue on MIPI:</h4>
+        </div>
+        <div class="row">
+          <div class="col">
+        <p>
+          Selected extended workshop papers will also be invited to contribute to  a special issue article in IJCV.
+        </p>
+        <p>
+          Webpage of IJCV special issue:
+          <a href="../MIPI_IJCV/index.html", class="badge bg-success shadow-success fs-sm", target="_blank">
+              <strong>Webpage</strong>
+          </a>
+        </p>
+        <p>
+          Paper submission site of IJCV special issue:
+          <a href="https://www.springer.com/journal/11263/updates/23967724/", class="badge bg-success shadow-success fs-sm", target="_blank">
+              <strong>Submission Site</strong>
+          </a>
+        </p>
+        </div>
+        </div> -->
+        </div>
+      </section>
+
+      <!-- Important Dates -->
+      <section id="dates" class="container py-5">
+        <div class="row pt-4 pb-3">
+          <div class="col-12">
+            <h2 class="text-center text-sm-start pb-2 pb-lg-0 mb-4 mb-lg-5">Important Dates</h2>
+          </div>
+<!--           <div class="col-lg-2 mb-3">
+            <div class="nav flex-nowrap flex-lg-column nav-tabs" role="tablist" aria-orientation="vertical">
+              <a href="#workshop" class="nav-link d-block w-100 rounded-3 p-4" id="workshop-tab" data-bs-toggle="tab" role="tab" aria-controls="workshop" aria-selected="false">
+                <div class="fs-3 fw-bold">Workshop</div>
+              </a>
+            </div>
+          </div> -->
+          <div class="col-lg-9 offset-lg-1">
+            <!-- Tab panes -->
+            <div class="tab-content">
+              <!-- Workshop -->
+              <div class="tab-pane fade show active" id="workshop" role="tabpanel" aria-labelledby="workshop-tab">
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th class="event">Event</th>
+                        <th class="date">Date (Anywhere on Earth)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Workshop paper submission deadline</th>
+                        <td>Sep 29, 2023</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Decisions</th>
+                        <td>Oct 24, 2023</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Camera ready</th>
+                        <td>Oct 27, 2023</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Schedule -->
+      <section id="schedule" class="bg-secondary py-5">
+        <div class="container">
+          <div class="row pt-4 pb-3">
+            <h2 class="text-center text-sm-start pb-2 pb-lg-0">Schedule</h2>
+          </div>
+          <p>--TBD--</p>
+
+        </div>
+      </section>
+	    
+
+<!--           </div>
+        </div>
+      </section> -->
+
+   
+
+
+      <!-- Organizers -->
+      <section id="organizers" class="container py-5">
+	      
+        <div class="container">
+          <div class="row pt-4 pb-3">
+            <h2 class="text-center text-sm-start pb-2 pb-lg-0">Organizers</h2>
+          </div>
+		
+          <div class="row justify-content-center">
+
+              <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/fangneng.jpg" class="d-block rounded-circle mx-auto mb-3" width="162" alt="Ralph Edwards">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://fnzhan.com/" target="_blank">Fangneng Zhan</a></h5>
+                  <p class="fs-sm mb-3">MPI-INF</p>
+                </div>
+              </div>
+  
+              <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/adam.jpeg" class="d-block rounded-circle mx-auto mb-3" width="162" alt="Ralph Edwards">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://gvrl.mpi-inf.mpg.de/" target="_blank">Adam Kortylewski</a></h5>
+                  <p class="fs-sm mb-3">MPI-INF & Uni of Freiburg</p>
+                </div>
+              </div>
+  
+              <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/anpei.jpg" class="d-block rounded-circle mx-auto mb-3" width="162" alt="Ralph Edwards">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://apchenstu.github.io/" target="_blank">Anpei Chen</a></h5>
+                  <p class="fs-sm mb-3">ETH Zürich & Uni of Tübingen</p>
+                </div>
+              </div>
+	      
+
+		  
+  
+	  </div>
+		
+		
+		
+	  <div class="row justify-content-center">
+		  
+	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/ayush.jpg" class="d-block rounded-circle mx-auto mb-3" width="162" alt="Ralph Edwards">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://ayushtewari.com/" target="_blank">Ayush Tewari</a></h5>
+                  <p class="fs-sm mb-3">MIT</p>
+                </div>
+              </div>
+	  
+	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/siyu.jpg" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://vlg.inf.ethz.ch/team/Prof-Dr-Siyu-Tang.html" target="_blank">Siyu Tang</a></h5>
+                  <p class="fs-sm mb-3">ETH Zürich</p>
+                </div>
+              </div>
+		  
+<!-- 	      <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/hao.jpg" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://cseweb.ucsd.edu/~haosu/" target="_blank">Hao Su</a></h5>
+                  <p class="fs-sm mb-3">UCSD</p>
+                </div>
+              </div> -->
+
+              <div class="col-md-3 py-3">
+                <div class="card card-body card-hover bg-light border-0 text-center mx-2">
+                  <img src="../data/christian.png" class="d-block rounded-circle mx-auto mb-3" width="162">
+                  <h5 class="fw-medium fs-lg mb-1"><a style="text-decoration:none" href="https://people.mpi-inf.mpg.de/~theobalt/" target="_blank">Christian Theobalt</a></h5>
+                  <p class="fs-sm mb-3">MPI-INF</p>
+                </div>
+              </div>
+          </div>
+		
+        </div>
+      </section>
+	    
+	    
+
+	    
+<!-- 	          <section id="submission" class="bg-secondary py-5">
+        <div class="container">
+          <div class="row pt-4 pb-3">
+            <h2 class="text-center text-sm-start pb-2 pb-lg-0">Call for Papers</h2>
+          </div> -->
+
+
+      <section id="committee" class="bg-secondary py-5">
+	<div class="container">
+          <div class="row pt-4 pb-3">
+	    <h2 class="text-center text-sm-start pb-2 pb-lg-0">Program Committee</h2>
+	  </div>
+<!--           <div class="col-12">
+            <h2 class="text-center text-sm-start pb-2 pb-lg-0 mb-4 mb-lg-5">Program Committee</h2>
+          </div> -->
+		
+          <div class="col-lg-9 offset-lg-1">
+            <div class="tab-content">
+              <!-- Workshop -->
+              <div class="tab-pane fade show active" id="workshop" role="tabpanel" aria-labelledby="workshop-tab">
+                <div class="table-responsive">
+<!--                   <table class="table"> -->
+		  <table>
+                    <tbody>
+		      <tr>
+			<td>Guoxing Sun (Max Planck Institute for Informatics)<span style="padding-left: 150px;"></td>
+			<td>Pramod Rao (Max Planck Institute for Informatics)</td>
+		      </tr>
+		      <tr>
+			<td>Junaid Wahid (Saarland University)<span style="padding-left: 150px;"></td>
+			<td>Chi Yu (Technical University of Munich)</td>
+		      </tr>
+		      <tr>
+			<td>Pulkit Gera (Max Planck Institute for Informatics)<span style="padding-left: 150px;"></td>
+			<td>Heming Zhu (Max Planck Institute for Informatics)</td>
+		      </tr>
+		      <tr>
+			<td>Kunhao Liu (Nanyang Technological University)<span style="padding-left: 150px;"></td>
+			<td>Jiahui Zhang (Nanyang Technological University)</td>
+		      </tr>
+		      <tr>
+			<td>Leonhard Sommer (University of Freiburg)<span style="padding-left: 150px;"></td>
+			<td>Artur Jesslen (University of Freiburg)</td>
+		      </tr>
+		      <tr>
+			<td>Muyu Xu (Nanyang Technological University)<span style="padding-left: 150px;"></td>
+			<td>Zuhao Yang (Nanyang Technological University)</td>
+		      </tr>
+		      <tr>
+			<td>Rongliang Wu (A*STAR)<span style="padding-left: 150px;"></td>
+			<td>Kunyang Li (Nanyang Technological University)</td>
+		      </tr>
+		      <tr>
+			<td>Yingchen Yu (Nanyang Technological University)<span style="padding-left: 150px;"></td>
+			<td>Weijing Tao (Nanyang Technological University)</td>
+		      </tr>
+		      <tr>
+			<td>Quan Meng (Technical University of Munich)<span style="padding-left: 150px;"></td>
+			<td>Zehao Yu (University of Tübingen)</td>
+		      </tr>
+		      <tr>
+			<td>Haiwen Wang (University of Tübingen)<span style="padding-left: 150px;"></td>
+			<td>Shaofeng Wang (ETH Zürich and University of Tübingen)</td>
+		      </tr>
+	              <tr>
+			<td>Haofei Xu (ETH Zürich and University of Tübingen)<span style="padding-left: 150px;"></td>
+			<td> </td>
+		      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+
+            </div>
+          </div>
+        </div>
+      </section>
+	
+<!--       <br>
+      <br>
+      <br> -->
+	    
+<!--       <section id="organizers" class="container py-5">
+        <div class="container">
+	    <script type='text/javascript' id='clustrmaps' src='//cdn.clustrmaps.com/map_v2.js?cl=ffffff&w=500&t=n&d=46xpoU7l0x175HX9OM1n3Cbf9JxW9Yd2HmDFVmTEatk&co=78beef&ct=ffffff'></script>
+	</div>
+      </section> -->
+
+
+
+
+    <style>
+      .img-container {
+        text-align: center;
+        display: block;
+      }
+    </style>
+
+<!--   <br> -->
+  
+
+  </main>
+    <!-- Footer -->
+    <footer class="footer dark-mode bg-dark pt-5 pb-4 pb-lg-5">
+      <div class="container text-center pt-lg-3 opacity-90">
+        <div class="navbar-brand justify-content-center text-dark mb-2 mb-lg-4">
+          <img src="../assets/img/logo.png" class="me-2" width="35" alt="Logo">
+          <span class="fs-4">Neural Fields in Principle</span>
+	</div>
+        <p class="text-center text-light mt-lg-4 mb-0 opacity-90">
+          Contact: 
+          <a href="mailto:fzhan@mpi-inf.mpg.de">fzhan@mpi-inf.mpg.de</a> 
+<!-- 		&nbsp;&nbsp;  <span class="text-light"> Copyright &copy; Neural Fields in Principle -->
+        </div>
+        <p class="fs-sm text-center pt-3 mt-lg-4 mb-0 opacity-90">
+          <span class="text-light"> Copyright &copy; Neural Fields in Principle
+        </p>
+      </div>
+    </footer>
+
+    <!-- Back to top button -->
+    <a href="#top" class="btn-scroll-top" data-scroll>
+      <span class="btn-scroll-top-tooltip text-muted fs-sm me-2">Top</span>
+      <i class="btn-scroll-top-icon bx bx-chevron-up"></i>
+    </a>
+
+
+    <!-- Vendor Scripts -->
+    <script src="../assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/vendor/smooth-scroll/dist/smooth-scroll.polyfills.min.js"></script>
+    <script src="../assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="../assets/vendor/lightgallery/lightgallery.min.js"></script>
+    <script src="../assets/vendor/lightgallery/plugins/fullscreen/lg-fullscreen.min.js"></script>
+    <script src="../assets/vendor/lightgallery/plugins/zoom/lg-zoom.min.js"></script>
+    <script src="../assets/vendor/lightgallery/plugins/video/lg-video.min.js"></script>
+
+    <!-- Main Theme Script -->
+    <script src="../assets/js/theme.min.js"></script>
+    <script>
+      document.addEventListener('scroll', function(e) {
+        let currentOffset = window.scrollY + 80,
+            currentSection = "",
+            sections = ["tracks", "submission", "dates", "schedule", "speakers", "organizers", "awards", "previous"];
+
+        for (let i = 0; i < sections.length; ++ i) {
+          if (currentOffset < document.getElementById(sections[i]).offsetTop) {
+            break;
+          }
+          currentSection = sections[i];
+        }
+
+        let navbar = document.getElementsByClassName("navbar-nav")[0],
+            navLinks = navbar.getElementsByTagName("a");
+
+        for (let i = 0; i < navLinks.length; ++ i) {
+          navLinks[i].classList.remove("active");
+          if (navLinks[i].getAttribute("href") == "#" + currentSection) {
+            navLinks[i].classList.add("active");
+          }
+        }
+      })
+    </script>
+    <script type="text/javascript">
+      $('#schedule').on('click', '.abstract', function () {
+          var bibtexBlock = $('pre', $(this).parent().parent().parent()),
+              isVisible = bibtexBlock.is(':visible')
+            
+          if (isVisible) {
+              bibtexBlock.slideUp(36)
+          } else {
+              bibtexBlock.slideDown(36)
+          }
+      })
+      </script>
+
+    </body>
+</html>
